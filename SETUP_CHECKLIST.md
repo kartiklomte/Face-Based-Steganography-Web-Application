@@ -85,7 +85,7 @@ cd project\backend
 
 ```bash
 # Windows
-python -m venv venv
+py -3.10 -m venv venv
 venv\Scripts\activate
 
 # macOS/Linux
@@ -99,22 +99,47 @@ source venv/bin/activate
 
 ### Install Dependencies
 
+1. install the visual studio build 2022
+   - In this add the c++ for the destop.
+
+2. install the cmake version 3.24.4
+
+### inside the x64 Native Tool Command 2022:
+Go to the adderess and enter the below command
+venv\Scripts\activate
+pip install "setuptools<60"
+pip install "wheel<0.38"
+pip install "numpy<2"
+pip install dlib==19.24.2 --no-build-isolation
+
+### now enter the reaming command in the termainal of the vs code
 ```bash
-pip install -r requirements.txt
+1. cd backend 
+2. venv\Scripts\activate
+3. python -m pip install --upgrade pip setuptools wheel
+4. pip install numpy==1.26.4
+5. pip install dlib==19.24.2
+6. pip install face-recognition
+7. pip install fastapi uvicorn pymongo python-dotenv pydantic email-validator passlib[bcrypt] python-multipart email-validator "python-jose[cryptography]"
+8. pip install cmake
+9. pip install git+https://github.com/ageitgey/face_recognition_models
+
+in the new terminal:
+git clone https://github.com/ageitgey/face_recognition_models.git
+
+in old terminal:
+10. cd face_recognition_models
+11. pip install .
+12. pip install setuptools==68.2.2
+
+
+
 ```
 
 - [ ] All packages installed successfully
 - [ ] No error messages
 - [ ] Takes ~3-5 minutes
 
-Verify installation:
-```bash
-pip list | findstr face-recognition
-```
-
-- [ ] `face-recognition` listed
-- [ ] `pymongo` listed
-- [ ] `fastapi` listed
 
 ### Configure Environment Variables
 

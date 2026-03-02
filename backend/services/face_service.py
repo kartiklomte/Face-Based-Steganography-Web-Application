@@ -23,15 +23,16 @@ def extract_face_encoding(image_bytes: bytes) -> Optional[List[float]]:
         # Convert bytes to PIL Image
         image = Image.open(io.BytesIO(image_bytes))
         
-        # Convert PIL Image to numpy array
-        image_array = np.array(image)
+        # Convert to RGB mode (handles RGBA, grayscale, etc.)
+        # This ensures the image is always 8-bit RGB
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
         
-        # Convert RGB to BGR if needed (face_recognition expects RGB)
-        if len(image_array.shape) == 3 and image_array.shape[2] == 3:
-            # Already in correct format
-            pass
+        # Convert PIL Image to numpy array with uint8 dtype
+        image_array = np.array(image, dtype=np.uint8)
         
         # Find face encodings in the image
+        # face_recognition expects RGB format (which we now have)
         face_encodings = face_recognition.face_encodings(image_array)
         
         if len(face_encodings) == 0:

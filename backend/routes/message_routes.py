@@ -1,7 +1,7 @@
 """
 Message routes - Embed, Extract, and Share endpoints
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Form, Header
 from fastapi.responses import FileResponse
 from bson.objectid import ObjectId
 import io
@@ -23,7 +23,7 @@ from utils import generate_filename, string_to_object_id
 router = APIRouter(prefix="/api", tags=["messages"])
 
 # Dependency to get current user from JWT token
-async def get_current_user(authorization: str = None):
+async def get_current_user(authorization: str = Header(None)):
     """
     Extract and verify JWT token from Authorization header
     """
@@ -50,7 +50,7 @@ async def embed_message(
     receiver_email: str = Form(...),
     secret_message: str = Form(...),
     image: UploadFile = File(...),
-    authorization: str = None
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Embed encrypted message in image
@@ -64,8 +64,7 @@ async def embed_message(
     6. Return stego image and encryption key
     """
     try:
-        # Get current user
-        current_user = await get_current_user(authorization)
+        # Get current user from dependency
         sender_id = current_user["user_id"]
         sender_email = current_user["email"]
         
@@ -123,7 +122,7 @@ async def embed_message(
 async def extract_message(
     stego_image: UploadFile = File(...),
     encryption_key: str = Form(...),
-    authorization: str = None
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Extract and decrypt message from stego image
@@ -136,8 +135,7 @@ async def extract_message(
     5. Return decrypted message
     """
     try:
-        # Get current user
-        current_user = await get_current_user(authorization)
+        # Get current user from dependency
         receiver_email = current_user["email"]
         
         # Read stego image
@@ -177,7 +175,7 @@ async def share_via_email(
     receiver_email: str = Form(...),
     encryption_key: str = Form(...),
     stego_image: UploadFile = File(...),
-    authorization: str = None
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Send stego image via email to receiver
@@ -189,8 +187,7 @@ async def share_via_email(
     4. Return success message
     """
     try:
-        # Get current user
-        current_user = await get_current_user(authorization)
+        # Get current user from dependency
         sender_name = users_collection.find_one({"_id": ObjectId(current_user["user_id"])})["name"]
         
         # Read stego image
@@ -214,13 +211,12 @@ async def share_via_email(
         raise HTTPException(status_code=500, detail=f"Failed to share via email: {str(e)}")
 
 @router.get("/messages")
-async def get_messages(authorization: str = None):
+async def get_messages(current_user: dict = Depends(get_current_user)):
     """
     Get all messages received by current user
     """
     try:
-        # Get current user
-        current_user = await get_current_user(authorization)
+        # Get current user from dependency
         receiver_email = current_user["email"]
         
         # Find messages for current user
