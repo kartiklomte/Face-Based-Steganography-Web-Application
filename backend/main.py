@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
 from routes import auth_router, message_router
+from database import init_database
 
 # Load environment variables
 load_dotenv()
@@ -25,6 +26,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Initialize database on startup
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database connection on app startup"""
+    try:
+        init_database()
+    except Exception as e:
+        print(f"Warning: Database initialization failed: {e}")
+        print("API will return errors for endpoints that need database access")
 
 # Include routers
 app.include_router(auth_router)

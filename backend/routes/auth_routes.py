@@ -4,7 +4,7 @@ Authentication routes - Register and Login endpoints
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from bson.objectid import ObjectId
 from datetime import timedelta
-from database import users_collection
+from database import get_users_collection
 from models import UserRegister, UserLogin, AuthResponse, UserResponse
 from services import (
     hash_password, 
@@ -35,6 +35,8 @@ async def register(
     5. Return JWT token
     """
     try:
+        users_collection = get_users_collection()
+        
         # Check if user already exists
         existing_user = users_collection.find_one({"email": email})
         if existing_user:
@@ -104,6 +106,8 @@ async def login(
     4. Return JWT token if all checks pass
     """
     try:
+        users_collection = get_users_collection()
+        
         # Find user by email
         user = users_collection.find_one({"email": email})
         if not user:

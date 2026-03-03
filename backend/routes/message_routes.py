@@ -7,7 +7,7 @@ from bson.objectid import ObjectId
 import io
 import os
 from datetime import datetime
-from database import users_collection, messages_collection
+from database import get_users_collection, get_messages_collection
 from models import MessageEmbed, MessageExtract, EmailShare
 from services import (
     generate_encryption_key,
@@ -26,11 +26,19 @@ router = APIRouter(prefix="/api", tags=["messages"])
 async def get_current_user(authorization: str = Header(None)):
     """
     Extract and verify JWT token from Authorization header
+    Works with multipart/form-data, JSON, and all request types
+    Case-insensitive and robust for Swagger and Axios
     """
-    if not authorization or not authorization.startswith("Bearer "):
+    # Check if header exists
+    if not authorization:
         raise HTTPException(status_code=401, detail="Missing or invalid token")
     
-    token = authorization.split(" ")[1]
+    # Parse Bearer token (case-insensitive scheme check)
+    auth_parts = authorization.split(" ", 1)
+    if len(auth_parts) != 2 or auth_parts[0].lower() != "bearer":
+        raise HTTPException(status_code=401, detail="Missing or invalid token")
+    
+    token = auth_parts[1]
     
     try:
         payload = decode_token(token)
@@ -42,6 +50,9 @@ async def get_current_user(authorization: str = Header(None)):
         
         return {"user_id": user_id, "email": email}
     
+    except HTTPException:
+        # Re-raise HTTPException to preserve 401 status
+        raise
     except Exception as e:
         raise HTTPException(status_code=401, detail="Invalid token")
 
@@ -64,6 +75,9 @@ async def embed_message(
     6. Return stego image and encryption key
     """
     try:
+        users_collection = get_users_collection()
+        messages_collection = get_messages_collection()
+        
         # Get current user from dependency
         sender_id = current_user["user_id"]
         sender_email = current_user["email"]
@@ -135,6 +149,8 @@ async def extract_message(
     5. Return decrypted message
     """
     try:
+        messages_collection = get_messages_collection()
+        
         # Get current user from dependency
         receiver_email = current_user["email"]
         
@@ -187,6 +203,8 @@ async def share_via_email(
     4. Return success message
     """
     try:
+        users_collection = get_users_collection()
+        
         # Get current user from dependency
         sender_name = users_collection.find_one({"_id": ObjectId(current_user["user_id"])})["name"]
         
@@ -216,6 +234,8 @@ async def get_messages(current_user: dict = Depends(get_current_user)):
     Get all messages received by current user
     """
     try:
+        messages_collection = get_messages_collection()
+        
         # Get current user from dependency
         receiver_email = current_user["email"]
         
