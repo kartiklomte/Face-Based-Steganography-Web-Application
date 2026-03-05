@@ -53,13 +53,14 @@ export const loginUser = async (email, password, faceImage) => {
 };
 
 /**
- * Embed encrypted message in image
+ * Embed encrypted message in merged images
  */
-export const embedMessage = async (receiverEmail, secretMessage, image) => {
+export const embedMessage = async (receiverEmail, secretMessage, image1, image2) => {
   const formData = new FormData();
   formData.append('receiver_email', receiverEmail);
   formData.append('secret_message', secretMessage);
-  formData.append('image', image);
+  formData.append('image1', image1);
+  formData.append('image2', image2);
 
   const response = await apiClient.post('/api/embed', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },

@@ -9,21 +9,35 @@ import Header from '../components/Header';
 export const SendMessage = () => {
   const [receiverEmail, setReceiverEmail] = useState('');
   const [secretMessage, setSecretMessage] = useState('');
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [image1, setImage1] = useState(null);
+  const [image2, setImage2] = useState(null);
+  const [imagePreview1, setImagePreview1] = useState(null);
+  const [imagePreview2, setImagePreview2] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [embeddedData, setEmbeddedData] = useState(null);
   const [sharing, setSharing] = useState(false);
 
-  const handleImageChange = (e) => {
+  const handleImageChange1 = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setImage(file);
+      setImage1(file);
       const reader = new FileReader();
       reader.onload = (event) => {
-        setImagePreview(event.target.result);
+        setImagePreview1(event.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageChange2 = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImage2(file);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImagePreview2(event.target.result);
       };
       reader.readAsDataURL(file);
     }
@@ -34,14 +48,14 @@ export const SendMessage = () => {
     setError('');
     setLoading(true);
 
-    if (!receiverEmail || !secretMessage || !image) {
-      setError('Please fill all fields');
+    if (!receiverEmail || !secretMessage || !image1 || !image2) {
+      setError('Please fill all fields including both images');
       setLoading(false);
       return;
     }
 
     try {
-      const response = await embedMessage(receiverEmail, secretMessage, image);
+      const response = await embedMessage(receiverEmail, secretMessage, image1, image2);
       setEmbeddedData(response);
       setSuccess(true);
     } catch (err) {
@@ -139,8 +153,10 @@ export const SendMessage = () => {
                       setEmbeddedData(null);
                       setReceiverEmail('');
                       setSecretMessage('');
-                      setImage(null);
-                      setImagePreview(null);
+                      setImage1(null);
+                      setImage2(null);
+                      setImagePreview1(null);
+                      setImagePreview2(null);
                     }}
                     className="w-full bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-bold"
                   >
@@ -171,21 +187,35 @@ export const SendMessage = () => {
                     className="w-full bg-gray-700 text-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 h-32"
                     placeholder="Enter your secret message here..."
                   />
-                  <p className="text-gray-400 text-xs mt-1">Max length depends on image size</p>
+                  <p className="text-gray-400 text-xs mt-1">Max length depends on merged image size</p>
                 </div>
 
                 <div>
-                  <label className="block text-gray-300 mb-2">Select Image</label>
-                  {imagePreview && (
-                    <img src={imagePreview} alt="Preview" className="w-full rounded-lg mb-4 max-h-64" />
+                  <label className="block text-gray-300 mb-2">Select First Image</label>
+                  {imagePreview1 && (
+                    <img src={imagePreview1} alt="Preview 1" className="w-full rounded-lg mb-4 max-h-64" />
                   )}
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={handleImageChange}
+                    onChange={handleImageChange1}
                     className="w-full bg-gray-700 text-white p-2 rounded-lg"
                   />
                   <p className="text-gray-400 text-xs mt-1">Supported formats: PNG, JPG, BMP, etc.</p>
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 mb-2">Select Second Image</label>
+                  {imagePreview2 && (
+                    <img src={imagePreview2} alt="Preview 2" className="w-full rounded-lg mb-4 max-h-64" />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange2}
+                    className="w-full bg-gray-700 text-white p-2 rounded-lg"
+                  />
+                  <p className="text-gray-400 text-xs mt-1">Images will be merged horizontally, resized to same height</p>
                 </div>
 
                 <button
@@ -193,7 +223,7 @@ export const SendMessage = () => {
                   disabled={loading}
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white p-3 rounded-lg font-bold text-lg"
                 >
-                  {loading ? 'Embedding Message...' : '🔒 Embed Message in Image'}
+                  {loading ? 'Embedding Message...' : '🔒 Embed Message in Merged Images'}
                 </button>
               </div>
             </form>

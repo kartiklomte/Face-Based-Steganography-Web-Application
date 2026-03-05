@@ -20,7 +20,7 @@ if not MONGODB_URI:
     if mongo_user and mongo_pass:
         username = quote_plus(mongo_user)
         password = quote_plus(mongo_pass)
-        MONGODB_URI = f"mongodb+srv://{username}:{password}@steganography-cluster.kfkeuho.mongodb.net/?appName=steganography-cluster"
+        MONGODB_URI = "mongodb+srv://steganography_user:stego123@steganography-cluster.mrbq5jo.mongodb.net/?appName=steganography-cluster"
 else:
     # If MONGODB_URI is provided, ensure special characters are properly encoded
     # Extract username and password from the URI and re-encode them

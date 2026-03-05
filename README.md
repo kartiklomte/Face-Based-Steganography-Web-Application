@@ -6,7 +6,8 @@ A full-stack web application that combines face recognition, AES encryption, and
 
 - **🎯 Face Recognition Authentication**: Secure login using facial recognition with face_recognition library
 - **🔒 AES-256 Encryption**: Military-grade encryption for messages using the cryptography library
-- **🖼️ LSB Steganography**: Hide encrypted messages in images using Least Significant Bit technique
+- **🖼️ Dual-Image Steganography**: Merge two images into a single cover image before hiding encrypted messages
+- **🖼️ LSB Steganography**: Hide encrypted messages in merged images using Least Significant Bit technique
 - **📧 Email Sharing**: Send stego images directly via email with encryption keys
 - **🛡️ JWT Authentication**: Secure API endpoints with JWT tokens
 - **🗄️ MongoDB Atlas**: Cloud database for storing users and messages
@@ -82,10 +83,11 @@ A full-stack web application that combines face recognition, AES encryption, and
 5. JWT token issued on successful authentication
 
 ### Message Security
-1. **Encryption**: Message encrypted with AES using Fernet
-2. **Steganography**: Encrypted message hidden in image using LSB
-3. **Key Management**: Unique AES key generated for each message
-4. **Access Control**: Only intended receiver can extract with proper key
+1. **Image Merging**: Two input images merged side-by-side into single cover image
+2. **Encryption**: Message encrypted with AES using Fernet
+3. **Steganography**: Encrypted message hidden in merged image using LSB
+4. **Key Management**: Unique AES key generated for each message
+5. **Access Control**: Only intended receiver can extract with proper key
 
 ### Database
 - **MongoDB Atlas** with unique email indexes
@@ -185,7 +187,7 @@ Frontend will run on `http://localhost:5173`
 - `POST /api/login` - Login with email, password, and face verification
 
 ### Messages (Protected - Requires JWT)
-- `POST /api/embed` - Embed encrypted message in image
+- `POST /api/embed` - Embed encrypted message in merged images (2 input images)
 - `POST /api/extract` - Extract and decrypt message from stego image
 - `POST /api/share-email` - Send stego image via email
 - `GET /api/messages` - Get all received messages
@@ -205,8 +207,9 @@ Frontend will run on `http://localhost:5173`
 2. **Send Message**
    - Fill in receiver email
    - Write your secret message
-   - Select an image to embed in
-   - Click "Embed Message"
+   - Select TWO images to merge and embed in
+   - Images will be resized to same height and merged horizontally
+   - Click "Embed Message in Merged Images"
 
 3. **Share**
    - Download stego image OR
@@ -238,10 +241,12 @@ Frontend will run on `http://localhost:5173`
 - Message format: Base64 encoded for transmission
 
 ### Steganography
-- Method: LSB (Least Significant Bit)
-- Capacity: Depends on image dimensions
-- Format: PNG for lossless storage
-- Header: 32-bit message length prefix
+- **Image Merging**: Two input images merged side-by-side horizontally
+- **Height Alignment**: Images resized to same height (maintaining aspect ratio before merging)
+- **Method**: LSB (Least Significant Bit)
+- **Capacity**: Depends on merged image dimensions (larger capacity due to two images)
+- **Format**: PNG for lossless storage
+- **Header**: 32-bit message length prefix
 
 ### Email Service
 - Protocol: SMTP with TLS
@@ -262,7 +267,7 @@ User Login
     ↓
 Send Message
     ↓
-[Select image] → [Message] → [Generate AES key] → [Encrypt] → [Hide in image via LSB]
+[Select two images] → [Merge horizontally] → [Resize to same height] → [Message] → [Generate AES key] → [Encrypt] → [Hide in merged image via LSB]
     ↓
 [Download stego] or [Send via email]
     ↓
@@ -285,10 +290,14 @@ Receive Message
 - Handles Fernet exceptions
 
 ### Steganography Service (`steganography_service.py`)
-- Converts messages to binary
-- Embeds in LSB of pixel values
-- Extracts bit-by-bit from image
-- Length-prefixed for recovery
+- **merge_images()**: Merges two input images side-by-side horizontally
+  - Resizes images to same height
+  - Maintains aspect ratio before merging
+  - Converts to RGB and outputs as PNG
+- **message_to_binary()**: Converts messages to binary
+- **embed_message_in_image()**: Embeds binary in LSB of pixel values
+- **extract_message_from_image()**: Extracts bit-by-bit from image
+- Length-prefixed for message recovery
 
 ### Email Service (`email_service.py`)
 - Sends SMTP emails via Gmail

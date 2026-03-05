@@ -16,7 +16,8 @@ from services import (
     embed_message_in_image,
     extract_message_from_image,
     send_stego_image_email,
-    decode_token
+    decode_token,
+    merge_images
 )
 from utils import generate_filename, string_to_object_id
 
@@ -60,19 +61,21 @@ async def get_current_user(authorization: str = Header(None)):
 async def embed_message(
     receiver_email: str = Form(...),
     secret_message: str = Form(...),
-    image: UploadFile = File(...),
+    image1: UploadFile = File(...),
+    image2: UploadFile = File(...),
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Embed encrypted message in image
+    Embed encrypted message in merged image (from two input images)
     
     Process:
     1. Verify JWT token
-    2. Generate AES encryption key
-    3. Encrypt message
-    4. Hide in image using LSB steganography
-    5. Store metadata in MongoDB
-    6. Return stego image and encryption key
+    2. Merge two input images into single cover image
+    3. Generate AES encryption key
+    4. Encrypt message
+    5. Hide in merged image using LSB steganography
+    6. Store metadata in MongoDB
+    7. Return stego image and encryption key
     """
     try:
         users_collection = get_users_collection()
@@ -87,8 +90,14 @@ async def embed_message(
         if not receiver:
             raise HTTPException(status_code=404, detail="Receiver email not found")
         
-        # Read image
-        image_bytes = await image.read()
+        # Read both images
+        image1_bytes = await image1.read()
+        image2_bytes = await image2.read()
+        
+        # Merge images into single cover image
+        merged_image_bytes = merge_images(image1_bytes, image2_bytes)
+        if merged_image_bytes is None:
+            raise HTTPException(status_code=400, detail="Failed to merge images")
         
         # Generate encryption key
         encryption_key = generate_encryption_key()
@@ -96,14 +105,14 @@ async def embed_message(
         # Encrypt message
         encrypted_message = encrypt_message(secret_message, encryption_key)
         
-        # Embed in image
-        stego_image_bytes, success = embed_message_in_image(image_bytes, encrypted_message)
+        # Embed in merged image using LSB steganography
+        stego_image_bytes, success = embed_message_in_image(merged_image_bytes, encrypted_message)
         
         if not success or stego_image_bytes is None:
             raise HTTPException(status_code=400, detail="Failed to embed message in image")
         
-        # Generate filename
-        filename = generate_filename(image.filename)
+        # Generate filename from merged image
+        filename = generate_filename("stego_image.png")
         
         # Store message metadata in MongoDB
         message_doc = {

@@ -5,7 +5,67 @@ Hides encrypted messages in images using Least Significant Bit technique
 from PIL import Image
 import io
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Optional
+
+def merge_images(image1_bytes: bytes, image2_bytes: bytes) -> Optional[bytes]:
+    """
+    Merge two images into a single cover image by placing them side-by-side horizontally.
+    Images are resized to the same height before merging.
+    
+    Args:
+        image1_bytes: First image bytes
+        image2_bytes: Second image bytes
+        
+    Returns:
+        Merged image bytes or None if merge fails
+    """
+    try:
+        # Open both images
+        img1 = Image.open(io.BytesIO(image1_bytes))
+        img2 = Image.open(io.BytesIO(image2_bytes))
+        
+        # Convert to RGB if necessary
+        if img1.mode != 'RGB':
+            img1 = img1.convert('RGB')
+        if img2.mode != 'RGB':
+            img2 = img2.convert('RGB')
+        
+        # Get dimensions
+        width1, height1 = img1.size
+        width2, height2 = img2.size
+        
+        # Use the maximum height as target height
+        target_height = max(height1, height2)
+        
+        # Resize images to the same height while maintaining aspect ratio
+        ratio1 = target_height / height1
+        ratio2 = target_height / height2
+        
+        new_width1 = int(width1 * ratio1)
+        new_width2 = int(width2 * ratio2)
+        
+        img1_resized = img1.resize((new_width1, target_height), Image.LANCZOS)
+        img2_resized = img2.resize((new_width2, target_height), Image.LANCZOS)
+        
+        # Create merged image (side-by-side horizontally)
+        merged_width = new_width1 + new_width2
+        merged_image = Image.new('RGB', (merged_width, target_height))
+        
+        # Paste images
+        merged_image.paste(img1_resized, (0, 0))
+        merged_image.paste(img2_resized, (new_width1, 0))
+        
+        # Convert to bytes
+        output = io.BytesIO()
+        merged_image.save(output, format='PNG')
+        output.seek(0)
+        
+        return output.getvalue()
+    
+    except Exception as e:
+        print(f"Error merging images: {str(e)}")
+        return None
+
 
 def message_to_binary(message: str) -> str:
     """

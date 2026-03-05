@@ -233,7 +233,7 @@ Checklist:
 ### Terminal 1 - Start Backend
 
 ```bash
-cd project\backend
+cd backend
 
 # Windows (with venv activated)
 venv\Scripts\activate
@@ -252,7 +252,7 @@ Verify backend started:
 ### Terminal 2 - Start Frontend
 
 ```bash
-cd project\frontend
+cd frontend
 npm run dev
 ```
 
